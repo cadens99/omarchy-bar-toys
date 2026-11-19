@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "cxdog.showdown",
+  "name": "Showdown",
+  "version": "1.0.0",
+  "author": "cxdog",
+  "description": "Two pixel cowboys pace apart, turn, and draw. The winner is random; the bullet crosses the bar and the score is kept.",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "Showdown.qml"
+  },
+  "barWidget": {
+    "displayName": "Showdown",
+    "description": "Two pixel cowboys duel on the bar.",
+    "category": "Fun",
+    "allowMultiple": false,
+    "defaultSection": "left",
+    "defaults": {
+      "trackWidth": 300
+    },
+    "schema": [
+      {
+        "key": "trackWidth",
+        "type": "integer",
+        "label": "Street width (px)",
+        "min": 120,
+        "max": 1200,
+        "step": 10,
+        "defaultValue": 300
+      }
+    ]
+  }
+}

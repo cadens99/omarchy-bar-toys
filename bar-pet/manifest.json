@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "cxdog.bar-pet",
+  "name": "Bar Pet",
+  "version": "1.0.0",
+  "author": "cxdog",
+  "description": "A little pixel T-rex that stomps along the bar, sits, naps, and hops when clicked.",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "Pet.qml"
+  },
+  "barWidget": {
+    "displayName": "Bar Pet",
+    "description": "A little pixel T-rex that stomps along the bar.",
+    "category": "Fun",
+    "allowMultiple": false,
+    "defaultSection": "left",
+    "defaults": {
+      "trackWidth": 260
+    },
+    "schema": [
+      {
+        "key": "trackWidth",
+        "type": "integer",
+        "label": "Walking space (px)",
+        "min": 60,
+        "max": 1200,
+        "step": 10,
+        "defaultValue": 260
+      }
+    ]
+  }
+}
