@@ -20,6 +20,8 @@ BarWidget {
   readonly property string fontFamily: bar ? bar.fontFamily : Style.font.family
   readonly property string scriptPath: decodeURIComponent(String(Qt.resolvedUrl("fetch.py")).replace(/^file:\/\//, ""))
 
+  readonly property color fixedColor: "#a8cc95"
+
   property var items: []
   property string status: "Loading GitHub activity…"
   property bool paused: hover.hovered
@@ -145,7 +147,10 @@ BarWidget {
           Text {
             textFormat: Text.PlainText
             text: modelData.tag
-            color: Commons.Color.accent
+            // CI results stand out: red for failures (theme red), green when fixed.
+            color: modelData.tag === "FAIL" ? Commons.Color.urgent
+                 : modelData.tag === "FIXED" ? root.fixedColor
+                 : Commons.Color.accent
             font.family: root.fontFamily
             font.pixelSize: Style.font.body
             font.bold: true
