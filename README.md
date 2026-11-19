@@ -5,7 +5,7 @@ Three small, silly widgets for the [Omarchy](https://omarchy.org/) bar.
 | Widget | What it does |
 |---|---|
 | **bar-pet** | A pixel T-rex that stomps back and forth, sits, naps (with floating z's), and hops when you click it. |
-| **showdown** | Two pixel cowboys stand back to back, pace apart, turn, and draw. The winner is random; you see the muzzle flash and the bullet cross the bar, and a running score is kept. |
+| **showdown** | Two pixel cowboys stand back to back, pace apart, turn, and draw. The winner is random; you see the muzzle flash and the bullet cross the bar, and a running score is kept. Sometimes a tumbleweed rolls through the street during the stare-down. |
 | **github-ticker** | A sports-ticker style scroll of recent GitHub activity on your repos: pushes (with commit messages), PRs, issues, comments, stars, forks, releases. Hover to pause, click a headline to open it. |
 
 ![bar-pet](screenshots/bar-pet.gif)
@@ -55,6 +55,7 @@ Add these keys to the widget's entry in `~/.config/omarchy/shell.json`, e.g.
 |---|---|---|---|
 | bar-pet | `trackWidth` | 260 | Pixels of bar the pet can roam |
 | showdown | `trackWidth` | 300 | Width of the street |
+| showdown | `tumbleweedChance` | 0.4 | Chance (0 to 1) a tumbleweed rolls through each stare-down |
 | github-ticker | `width` | 520 | Ticker width in pixels |
 | github-ticker | `speed` | 30 | Scroll speed, pixels per second |
 | github-ticker | `refreshMinutes` | 5 | How often to poll GitHub |

@@ -93,6 +93,23 @@ BarWidget {
   property string banner: ""
   property bool bannerHot: false
 
+  // Tumbleweed: sometimes rolls through the street during the stare-down.
+  readonly property real tumbleweedChance: Number(setting("tumbleweedChance", 0.4))
+  readonly property int tw: 7 * p
+  property bool tumbling: false
+  property int tumbleDir: 1
+  property real tumbleX: -100
+  property int tumbleSpin: 0
+  readonly property var tumbleRows: [
+    "..tdt..",
+    ".dt.tt.",
+    "t.dtd.t",
+    "dtd..td",
+    "t..td.t",
+    ".dd.td.",
+    "..tdt.."
+  ]
+
   function ticksFor(minS, maxS) {
     return Math.max(1, Math.round((minS + Math.random() * (maxS - minS)) * 1000 / tick.interval))
   }
@@ -112,6 +129,7 @@ BarWidget {
     rPose = "stand"
     bulletLive = false
     flashTicks = 0
+    tumbling = false
     banner = ""
     shown = true
     enter("ready", ticksFor(3, 7))
@@ -147,11 +165,26 @@ BarWidget {
           root.lPose = "stand"; root.rPose = "stand"
           root.lFacingRight = true; root.rFacingRight = false
           root.enter("turn", root.ticksFor(0.8, 2.4))
+          if (Math.random() < root.tumbleweedChance) {
+            root.tumbleDir = Math.random() < 0.5 ? 1 : -1
+            root.tumbleX = root.tumbleDir > 0 ? -root.tw : root.width
+            root.tumbling = true
+          }
         }
         break
       }
 
       case "turn":
+        if (root.tumbling) {
+          // Hold the stare-down until the tumbleweed has rolled out of town.
+          root.tumbleX += root.tumbleDir * 3
+          if (root.ticks % 3 === 0) root.tumbleSpin = (root.tumbleSpin + 1) % 4
+          if (root.tumbleX > root.width || root.tumbleX < -root.tw) {
+            root.tumbling = false
+            root.enter("turn", root.ticksFor(0.6, 1.4))
+          }
+          break
+        }
         if (root.ticks >= root.phaseLen) {
           root.lPose = "aim"; root.rPose = "aim"
           root.banner = "DRAW!"; root.bannerHot = true
@@ -247,6 +280,33 @@ BarWidget {
     rows: root.sprite(root.rPose)
     pal: root.palette("#a87452", "#8fb3e0")
     facingRight: root.rFacingRight
+  }
+
+  // Tumbleweed: tumbles in quarter turns and bounces along the ground.
+  Canvas {
+    id: tumbleweed
+    visible: root.tumbling && root.shown
+    width: root.tw
+    height: root.tw
+    x: Math.round(root.tumbleX)
+    y: root.groundY + root.ch - root.tw
+       - Math.round(Math.abs(Math.sin(root.tumbleX / (root.tw * 1.6))) * root.p * 3)
+    rotation: root.tumbleSpin * 90 * root.tumbleDir
+    onVisibleChanged: if (visible) requestPaint()
+    onPaint: {
+      var ctx = getContext("2d")
+      ctx.clearRect(0, 0, width, height)
+      var pal = { "t": "#b9935a", "d": "#7d5d36" }
+      for (var r = 0; r < root.tumbleRows.length; r++) {
+        var line = root.tumbleRows[r]
+        for (var c = 0; c < line.length; c++) {
+          var col = pal[line[c]]
+          if (!col) continue
+          ctx.fillStyle = col
+          ctx.fillRect(c * root.p, r * root.p, root.p, root.p)
+        }
+      }
+    }
   }
 
   // Muzzle flash
