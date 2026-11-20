@@ -5,7 +5,7 @@ Three small, silly widgets for the [Omarchy](https://omarchy.org/) bar.
 | Widget | What it does |
 |---|---|
 | **bar-pet** | A pixel T-rex that stomps back and forth, sits, naps (with floating z's), and hops when you click it. |
-| **showdown** | Two pixel cowboys stand back to back, pace apart, turn, and draw. The winner is random; you see the muzzle flash and the bullet cross the bar, and a running score is kept. Sometimes a tumbleweed rolls through the street during the stare-down. |
+| **showdown** | Two pixel cowboys stand back to back, pace apart, turn, and draw. The winner is random; you see the muzzle flash and the bullet cross the bar, and a running score is kept. Click the cowboys to reset the score and start over. Sometimes a tumbleweed rolls through the street during the stare-down. |
 | **github-ticker** | A sports-ticker style scroll of recent GitHub activity on your repos: pushes (with commit messages), PRs, issues, comments, stars, forks, releases. Also watches GitHub Actions: a red **FAIL** leads the ticker (with a desktop notification) when a workflow's latest run fails, and a green **FIXED** shows when it passes again. Hover to pause, click a headline to open it. |
 
 ![bar-pet](screenshots/bar-pet.gif)
