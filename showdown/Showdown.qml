@@ -135,6 +135,15 @@ BarWidget {
     enter("ready", ticksFor(3, 7))
   }
 
+  // Click the street: wipe the score and start a fresh duel.
+  function newGame() {
+    scoreL = 0
+    scoreR = 0
+    reset()
+    banner = "0 – 0"   // shown while they stand back to back, cleared when they pace
+    bannerHot = false
+  }
+
   Timer {
     id: tick
     interval: 45
@@ -148,6 +157,7 @@ BarWidget {
       case "ready":
         if (root.ticks >= root.phaseLen) {
           root.lPose = "walkA"; root.rPose = "walkA"
+          root.banner = ""
           root.enter("pace", 0)
         }
         break
@@ -325,6 +335,12 @@ BarWidget {
     color: "#f7e3a1"
     x: Math.round(root.bulletX)
     y: root.groundY + 5 * root.p
+  }
+
+  MouseArea {
+    anchors.fill: parent
+    cursorShape: Qt.PointingHandCursor
+    onClicked: root.newGame()
   }
 
   // "DRAW!" and the running score, in the empty street between them.
