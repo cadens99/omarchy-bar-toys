@@ -5,8 +5,8 @@ Three small, silly widgets for the [Omarchy](https://omarchy.org/) bar.
 | Widget | What it does |
 |---|---|
 | **bar-pet** | A pixel T-rex that stomps back and forth, sits, naps (with floating z's), and hops when you click it. |
-| **showdown** | Two pixel cowboys stand back to back, pace apart, turn, and draw. The winner is random; you see the muzzle flash and the bullet cross the bar, and a running score is kept. Click the cowboys to reset the score and start over. Sometimes a tumbleweed rolls through the street during the stare-down. |
-| **github-ticker** | A sports-ticker style scroll of recent GitHub activity on your repos: pushes (with commit messages), PRs, issues, comments, stars, forks, releases. Hover to pause, click a headline to open it. |
+| **showdown** | Two pixel cowboys stand back to back, pace apart, turn, and draw. The winner is random; you see the muzzle flash and the bullet cross the bar, and a running score is kept. Sometimes a tumbleweed rolls through the street during the stare-down. |
+| **github-ticker** | A sports-ticker style scroll of recent GitHub activity on your repos: pushes (with commit messages), PRs, issues, comments, stars, forks, releases. Also watches GitHub Actions: a red **FAIL** leads the ticker (with a desktop notification) when a workflow's latest run fails, and a green **FIXED** shows when it passes again. Hover to pause, click a headline to open it. |
 
 ![bar-pet](screenshots/bar-pet.gif)
 
@@ -42,6 +42,13 @@ The ticker never stores or reads a token itself. It runs `fetch.py`, which calls
 your existing `gh` login, every few minutes. It shows your own activity plus other people's
 activity on your most recently pushed repos. Commit messages and PR titles it has to look up are
 cached in `~/.cache/github-ticker/`.
+
+**CI alerts:** for your recently pushed repos (and repos you've been active in), the ticker checks
+the latest completed run of each workflow on each branch from the last 3 days. Failures show as a
+red `FAIL` (your theme's red) and are pinned to the front for 48 hours; a workflow that passes
+right after failing shows a green `FIXED`. Passing runs are not shown. New failures also pop up a
+desktop notification once; the first run only records failures that already exist, so you don't
+get a burst of old alerts.
 
 Note: if you have private repos, their names and PR titles will scroll across your bar. Keep that
 in mind before screen sharing.
