@@ -183,6 +183,85 @@ def describe(ev, me, cache, budget):
     return None
 
 
+CI_DAYS = 3                 # ignore CI results older than this
+CI_PIN_HOURS = 48           # failures newer than this go to the front of the ticker
+CI_FAIL = {"failure", "timed_out", "startup_failure"}
+CI_SKIP = {"skipped", "cancelled", "neutral", "action_required", "stale"}
+CI_SEEN = os.path.join(CACHE_DIR, "ci-seen.json")
+
+
+def parse_ts(iso):
+    try:
+        return datetime.strptime(iso, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc).timestamp()
+    except Exception:
+        return 0
+
+
+def ci_items(repos, me):
+    """Latest completed run per (workflow, branch): FAIL if it failed, FIXED if it
+    passed right after a failure. Passing runs are not shown."""
+    out = []
+    cutoff = time.time() - CI_DAYS * 86400
+    for repo in repos:
+        try:
+            runs = (gh_api(f"/repos/{repo}/actions/runs?per_page=40") or {}).get("workflow_runs") or []
+        except Exception:
+            continue
+        groups = {}
+        for r in runs:
+            if r.get("status") != "completed" or r.get("conclusion") in CI_SKIP:
+                continue
+            groups.setdefault((r.get("workflow_id"), r.get("head_branch")), []).append(r)
+        short = repo.split("/", 1)[-1] if repo.startswith(me + "/") else repo
+        for runs_for in groups.values():
+            runs_for.sort(key=lambda r: r.get("updated_at", ""), reverse=True)
+            top = runs_for[0]
+            ts = parse_ts(top.get("updated_at", ""))
+            if ts < cutoff:
+                continue
+            name = top.get("name") or "CI"
+            branch = top.get("head_branch") or "?"
+            title = top.get("display_title") or ""
+            if top.get("conclusion") in CI_FAIL:
+                text = f"{name} failed on {short}/{branch}" + (f": {title}" if title else "")
+                out.append({"tag": "FAIL", "text": text, "url": top.get("html_url") or "",
+                            "ts": ts, "run": str(top.get("id")), "title": f"{name} failed: {short}/{branch}",
+                            "body": title})
+            elif top.get("conclusion") == "success" and len(runs_for) > 1 \
+                    and runs_for[1].get("conclusion") in CI_FAIL:
+                out.append({"tag": "FIXED", "text": f"{name} passing again on {short}/{branch}",
+                            "url": top.get("html_url") or "", "ts": ts})
+    return out
+
+
+def notify_new_failures(fails):
+    """Desktop notification for failures not seen before. The first run ever only
+    records what is already failing, so you don't get a burst of old alerts."""
+    try:
+        with open(CI_SEEN) as f:
+            seen = json.load(f)
+        first_run = False
+    except Exception:
+        seen, first_run = {}, True
+    for it in fails:
+        rid = it.get("run")
+        if not rid or rid in seen:
+            continue
+        seen[rid] = int(time.time())
+        if not first_run:
+            subprocess.run(["notify-send", "-u", "critical", "-a", "GitHub CI",
+                            clip(it.get("title", "CI failed"), 120), clip(it.get("body", ""), 200)],
+                           timeout=5, check=False)
+    try:
+        os.makedirs(CACHE_DIR, exist_ok=True)
+        keep = dict(sorted(seen.items(), key=lambda kv: kv[1])[-500:])
+        with open(CI_SEEN + ".tmp", "w") as f:
+            json.dump(keep, f)
+        os.replace(CI_SEEN + ".tmp", CI_SEEN)
+    except Exception:
+        pass
+
+
 def main():
     if not GH:
         print(json.dumps({"ok": False, "error": "gh CLI not found"}))
@@ -206,16 +285,36 @@ def main():
     ordered = sorted(events.values(), key=lambda e: e.get("created_at", ""), reverse=True)
     cache = load_commit_cache()
     budget = [25]  # max new commit/PR-title lookups per run (results are cached)
-    items = []
+    feed = []
     for ev in ordered:
         d = describe(ev, me, cache, budget)
         if not d:
             continue
         tag, text, url = d
-        items.append({"tag": tag, "text": clip(text), "url": str(url)[:400], "age": age(ev.get("created_at", ""))})
-        if len(items) >= MAX_ITEMS:
+        feed.append({"tag": tag, "text": text, "url": url, "ts": parse_ts(ev.get("created_at", ""))})
+        if len(feed) >= MAX_ITEMS:
             break
     save_commit_cache(cache)
+
+    # CI: your owned repos plus any repo you've been active in (e.g. other orgs).
+    watch = [r["full_name"] for r in repos]
+    for ev in ordered:
+        name = ev.get("repo", {}).get("name")
+        if name and name not in watch:
+            watch.append(name)
+    ci = ci_items(watch[:12], me)
+    fails = [c for c in ci if c["tag"] == "FAIL"]
+    notify_new_failures(fails)
+
+    # Fresh failures lead the ticker; everything else is newest first.
+    pin_after = time.time() - CI_PIN_HOURS * 3600
+    pinned = sorted([c for c in fails if c["ts"] >= pin_after], key=lambda c: c["ts"], reverse=True)
+    rest = sorted([x for x in feed + ci if x not in pinned], key=lambda x: x["ts"], reverse=True)
+
+    items = []
+    for x in (pinned + rest)[:MAX_ITEMS]:
+        iso = datetime.fromtimestamp(x["ts"], timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ") if x["ts"] else ""
+        items.append({"tag": x["tag"], "text": clip(x["text"]), "url": str(x["url"])[:400], "age": age(iso)})
     print(json.dumps({"ok": True, "items": items, "fetched": int(time.time())}))
 
 
